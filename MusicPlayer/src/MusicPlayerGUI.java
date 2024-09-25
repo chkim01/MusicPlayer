@@ -11,6 +11,8 @@ public class MusicPlayerGUI extends JFrame {  // JFrame은 윈도우 창을 나�
     private JButton pauseButton;  // 일시정지 버튼
     private JButton stopButton;   // 정지 버튼
     private JButton nextButton;  // 다음 버튼
+    private JButton previousButton;  // 이전 곡 버튼 추가
+    private JButton selectFilesButton;  // 파일 선택 버튼 추가
     private JList<String> playListUI;   // 재생 목록을 보여줄 JList
     private DefaultListModel<String> listModel;  // JList 모델
     private Clip audioClip;  // 음악 재생을 위한 Clip 객체
@@ -25,26 +27,36 @@ public class MusicPlayerGUI extends JFrame {  // JFrame은 윈도우 창을 나�
         setSize(600, 400);         // 창 크기 설정 (너비 600, 높이 400)
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // 창 닫기 버튼 설정
         setLayout(null);  // 레이아웃을 null로 설정하여 버튼 위치를 직접 조정
+        
+        // 파일 선택 버튼 추가
+        selectFilesButton = new JButton("Select Files");
+        selectFilesButton.setBounds(30, 300, 120, 30);
+        add(selectFilesButton);
 
         // 재생 버튼 생성 및 설정
         playButton = new JButton("Play");  // 버튼의 텍스트 설정
-        playButton.setBounds(30, 300, 80, 30);  // 위치(x, y) 및 크기(width, height) 설정
+        playButton.setBounds(160, 300, 80, 30);  // 위치(x, y) 및 크기(width, height) 설정
         add(playButton);  // 버튼을 창에 추가
 
         // 일지 정지 버튼 생성 및 설정
         pauseButton = new JButton("Pause");
-        pauseButton.setBounds(120, 300, 80, 30);
+        pauseButton.setBounds(250, 300, 80, 30);
         add(pauseButton);
         
         // 정지 버튼 생성 및 설정
         stopButton = new JButton("Stop");
-        stopButton.setBounds(210, 300, 80, 30);  // 위치와 크기 설정
+        stopButton.setBounds(340, 300, 80, 30);  // 위치와 크기 설정
         add(stopButton);
         
         // 다음 버튼 생성 및 설정
         nextButton = new JButton("Next");
-        nextButton.setBounds(300, 300, 80, 30);
+        nextButton.setBounds(430, 300, 80, 30);
         add(nextButton);
+        
+        // 이전 곡 버튼 추가
+        previousButton = new JButton("Previous");
+        previousButton.setBounds(520, 300, 80, 30);
+        add(previousButton);
         
         // JList 모델 초기화
         listModel = new DefaultListModel<>();
@@ -60,7 +72,8 @@ public class MusicPlayerGUI extends JFrame {  // JFrame은 윈도우 창을 나�
         
         playList = new ArrayList<>();  // 재생 목록을 위한 리스트 초기화
         currentSongIndex = -1;          // 재생 목록에서 첫 번째 곡의 인덱스
-
+        
+        /*
         // Play 버튼 클릭 시 파일 선택 후 오디오 재생
         playButton.addActionListener(new ActionListener() {  // 재생 버튼을 클릭했을 때
             @Override
@@ -77,6 +90,35 @@ public class MusicPlayerGUI extends JFrame {  // JFrame은 윈도우 창을 나�
                         currentSongIndex = 0;  // 첫 번째 곡으로 설정
                         playMusic(playList.get(currentSongIndex));
                     }
+                }
+            }
+        });
+        */
+        
+        // 1. 파일 선택 버튼 클릭 시 파일을 선택하고 재생 목록에 추가
+        selectFilesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int result = fileChooser.showOpenDialog(null);  // 파일 선택 대화상자 표시
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File[] selectedFiles = fileChooser.getSelectedFiles();  // 선택한 여러 파일 가져오기
+                    for (File file : selectedFiles) {
+                        playList.add(file.getAbsolutePath());  // 파일 경로를 리스트에 추가
+                        listModel.addElement(file.getName());  // 파일 이름을 JList에 추가
+                    }
+                }
+            }
+        });
+
+        // 2. Play 버튼 클릭 시 선택된 곡 재생
+        playButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (playListUI.getSelectedIndex() != -1) {
+                    currentSongIndex = playListUI.getSelectedIndex();  // 선택된 곡 인덱스
+                    playMusic(playList.get(currentSongIndex));  // 선택한 곡 재생
+                } else if (currentSongIndex != -1) {
+                    playMusic(playList.get(currentSongIndex));  // 현재 곡 계속 재생
                 }
             }
         });
@@ -113,6 +155,19 @@ public class MusicPlayerGUI extends JFrame {  // JFrame은 윈도우 창을 나�
                     currentSongIndex = (currentSongIndex + 1) % playList.size();  // 다음 곡 인덱스로 이동 (순환 재생)
                     playMusic(playList.get(currentSongIndex));  // 다음 곡 재생
                     playListUI.setSelectedIndex(currentSongIndex);  // 재생 중인 곡 선택
+                }
+            }
+        });
+        
+        // 이전 곡 버튼 클릭 시 이전 곡 재생
+        previousButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!playList.isEmpty()) {
+                    // 이전 곡으로 이동, 첫 번째 곡이면 마지막 곡으로 돌아가기
+                    currentSongIndex = (currentSongIndex - 1 + playList.size()) % playList.size();
+                    playMusic(playList.get(currentSongIndex));
+                    playListUI.setSelectedIndex(currentSongIndex);
                 }
             }
         });
